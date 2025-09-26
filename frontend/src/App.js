@@ -1099,6 +1099,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/store-register" element={<StoreOwnerRegister />} />
             
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['system_admin']}>
