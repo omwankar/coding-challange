@@ -49,7 +49,19 @@ const AuthProvider = ({ children }) => {
     setUser(userData);
     setToken(authToken);
     localStorage.setItem('token', authToken);
+    localStorage.setItem('user', JSON.stringify(userData));
     axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    
+    // Redirect based on user role
+    setTimeout(() => {
+      if (userData.role === 'system_admin') {
+        window.location.href = '/admin';
+      } else if (userData.role === 'normal_user') {
+        window.location.href = '/dashboard';
+      } else if (userData.role === 'store_owner') {
+        window.location.href = '/store-dashboard';
+      }
+    }, 100);
   };
 
   const logout = () => {
