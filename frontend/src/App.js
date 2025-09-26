@@ -204,6 +204,12 @@ const Login = () => {
                 Sign up here
               </Button>
             </p>
+            <p className="text-sm text-gray-600">
+              Want to register your store?{' '}
+              <Button variant="link" className="p-0 text-orange-600 font-semibold" onClick={() => window.location.href = '/store-register'}>
+                Store Registration
+              </Button>
+            </p>
           </div>
         </CardContent>
       </Card>
