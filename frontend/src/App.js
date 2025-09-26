@@ -77,7 +77,9 @@ const AuthProvider = ({ children }) => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
+    window.location.href = '/login';
     toast.success('Logged out successfully');
   };
 
