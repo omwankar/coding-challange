@@ -13,9 +13,6 @@ from datetime import datetime, timezone, timedelta
 import jwt
 from passlib.context import CryptContext
 from passlib.hash import bcrypt
-import smtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
 import secrets
 from enum import Enum
 
