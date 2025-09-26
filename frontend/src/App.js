@@ -36,14 +36,23 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // You could verify token here by making a request to get current user
-      setLoading(false);
-    } else {
-      setLoading(false);
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        setToken(storedToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
-  }, [token]);
+    setLoading(false);
+  }, []);
 
   const login = (userData, authToken) => {
     setUser(userData);
