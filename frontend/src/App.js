@@ -1412,6 +1412,12 @@ const UserDashboard = () => {
 const StoreOwnerDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
   const { user } = useAuth();
 
   useEffect(() => {
@@ -1426,6 +1432,33 @@ const StoreOwnerDashboard = () => {
       toast.error('Failed to fetch dashboard data');
     }
     setLoading(false);
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])/.test(passwordForm.newPassword)) {
+      toast.error('Password must contain at least one uppercase letter and one special character');
+      return;
+    }
+
+    try {
+      await axios.put(`${API}/auth/update-password`, {
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword
+      });
+      
+      toast.success('Password updated successfully');
+      setShowPasswordDialog(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update password');
+    }
   };
 
   const renderStars = (rating) => {
@@ -1483,8 +1516,17 @@ const StoreOwnerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900" data-testid="store-owner-dashboard-title">Store Owner Dashboard</h1>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowPasswordDialog(true)}
+            data-testid="store-owner-update-password-btn"
+            className="flex items-center space-x-2"
+          >
+            <User className="h-4 w-4" />
+            <span>Update Password</span>
+          </Button>
         </div>
       </div>
       
@@ -1524,9 +1566,9 @@ const StoreOwnerDashboard = () => {
             {/* Customer Ratings */}
             <Card>
               <CardHeader>
-                <CardTitle>Customer Ratings</CardTitle>
+                <CardTitle>Users Who Rated Your Store</CardTitle>
                 <CardDescription>
-                  Users who have rated your store
+                  List of users who have submitted ratings for your store
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1543,6 +1585,10 @@ const StoreOwnerDashboard = () => {
                             <p className="text-sm text-gray-600 flex items-center">
                               <Mail className="h-4 w-4 mr-1" />
                               {user.email}
+                            </p>
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {user.address}
                             </p>
                           </div>
                         </div>
@@ -1567,7 +1613,7 @@ const StoreOwnerDashboard = () => {
             <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
               <CardContent className="p-6">
                 <div className="text-center">
-                  <h3 className="text-lg font-medium text-green-100 mb-2">Your Store Rating</h3>
+                  <h3 className="text-lg font-medium text-green-100 mb-2">Average Rating of Your Store</h3>
                   <div className="text-4xl font-bold mb-3" data-testid="store-average-rating">
                     {average_rating.toFixed(1)}
                   </div>
@@ -1636,10 +1682,62 @@ const StoreOwnerDashboard = () => {
                 </CardContent>
               </Card>
             )}
-
           </div>
         </div>
       </div>
+
+      {/* Password Update Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Password</DialogTitle>
+            <DialogDescription>Change your account password</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                placeholder="Enter current password"
+                required
+                data-testid="store-current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>New Password (8-16 chars, 1 uppercase, 1 special)</Label>
+              <Input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                placeholder="Enter new password"
+                required
+                data-testid="store-new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm New Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                placeholder="Confirm new password"
+                required
+                data-testid="store-confirm-new-password"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button type="submit" className="flex-1" data-testid="store-submit-password-update">
+                Update Password
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setShowPasswordDialog(false)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
