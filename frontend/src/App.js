@@ -1031,7 +1031,241 @@ const UserDashboard = () => {
   );
 };
 
-// Header Component
+// Store Owner Dashboard
+const StoreOwnerDashboard = () => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get(`${API}/store-owner/dashboard`);
+      setDashboardData(response.data);
+    } catch (error) {
+      toast.error('Failed to fetch dashboard data');
+    }
+    setLoading(false);
+  };
+
+  const renderStars = (rating) => {
+    return (
+      <div className="flex">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating ? 'text-yellow-500 fill-current' : 'text-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (!dashboardData || !dashboardData.store) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 className="text-3xl font-bold text-gray-900" data-testid="store-owner-dashboard-title">Store Owner Dashboard</h1>
+          </div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="text-center p-8">
+              <Store className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-700 mb-2">No Store Found</h2>
+              <p className="text-gray-600 mb-4">
+                Your store registration is either pending approval or not found.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please contact the administrator if you believe this is an error.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const { store, users_who_rated, average_rating, total_ratings } = dashboardData;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 className="text-3xl font-bold text-gray-900" data-testid="store-owner-dashboard-title">Store Owner Dashboard</h1>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Store Information Card */}
+          <div className="lg:col-span-2">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Store className="h-6 w-6 mr-2 text-green-600" />
+                    {store.name}
+                  </span>
+                  <Badge className={`${
+                    store.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    store.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {store.status.charAt(0).toUpperCase() + store.status.slice(1)}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  <div className="flex items-center mt-2">
+                    <Mail className="h-4 w-4 mr-2" />
+                    {store.email}
+                  </div>
+                  <div className="flex items-center mt-1">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {store.address}
+                  </div>
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            {/* Customer Ratings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Ratings</CardTitle>
+                <CardDescription>
+                  Users who have rated your store
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {users_who_rated && users_who_rated.length > 0 ? (
+                  <div className="space-y-4">
+                    {users_who_rated.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                        <div className="flex items-center space-x-4">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{user.name}</h3>
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <Mail className="h-4 w-4 mr-1" />
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Star className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No ratings yet</h3>
+                    <p className="text-gray-600">Once customers start rating your store, they'll appear here.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Statistics Sidebar */}
+          <div className="space-y-6">
+            
+            {/* Rating Overview */}
+            <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-green-100 mb-2">Your Store Rating</h3>
+                  <div className="text-4xl font-bold mb-3" data-testid="store-average-rating">
+                    {average_rating.toFixed(1)}
+                  </div>
+                  <div className="flex justify-center mb-2">
+                    {renderStars(average_rating)}
+                  </div>
+                  <p className="text-green-100" data-testid="store-total-ratings">
+                    Based on {total_ratings} {total_ratings === 1 ? 'rating' : 'ratings'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+                  Quick Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Total Ratings:</span>
+                  <span className="font-bold text-lg" data-testid="total-ratings-count">{total_ratings}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Average Rating:</span>
+                  <span className="font-bold text-lg text-green-600">{average_rating.toFixed(1)}/5</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">Store Status:</span>
+                  <Badge variant={store.status === 'approved' ? 'default' : 'secondary'}>
+                    {store.status.charAt(0).toUpperCase() + store.status.slice(1)}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Rating Breakdown */}
+            {total_ratings > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Rating Performance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map((rating) => (
+                      <div key={rating} className="flex items-center space-x-2">
+                        <span className="text-sm w-4">{rating}</span>
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-yellow-500 h-2 rounded-full"
+                            style={{ 
+                              width: average_rating === rating ? '100%' : '0%' 
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-600 w-8">
+                          {average_rating === rating ? '1' : '0'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const Header = () => {
   const { user, logout } = useAuth();
 
