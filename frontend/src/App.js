@@ -1083,7 +1083,7 @@ const AdminDashboard = () => {
               </div>
               <div className="space-y-2">
                 <Label>User Role</Label>
-                <Select value={addUserForm.role} onValueChange={(value) => setAddUserForm({...addUserForm, role: value})}>
+                <Select value={addUserForm.role || 'normal_user'} onValueChange={(value) => setAddUserForm({...addUserForm, role: value})}>
                   <SelectTrigger data-testid="add-user-role">
                     <SelectValue />
                   </SelectTrigger>
