@@ -1347,6 +1347,12 @@ function App() {
               </ProtectedRoute>
             } />
             
+            <Route path="/store-dashboard" element={
+              <ProtectedRoute allowedRoles={['store_owner']}>
+                <StoreOwnerDashboard />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/unauthorized" element={
               <div className="min-h-screen flex items-center justify-center bg-red-50">
                 <Card className="max-w-md">
