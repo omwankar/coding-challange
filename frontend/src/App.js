@@ -1155,6 +1155,13 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userRatings, setUserRatings] = useState({});
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchStores();
@@ -1182,13 +1189,42 @@ const UserDashboard = () => {
     setLoading(false);
   };
 
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])/.test(passwordForm.newPassword)) {
+      toast.error('Password must contain at least one uppercase letter and one special character');
+      return;
+    }
+
+    try {
+      await axios.put(`${API}/auth/update-password`, {
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword
+      });
+      
+      toast.success('Password updated successfully');
+      setShowPasswordDialog(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update password');
+    }
+  };
+
   const submitRating = async (storeId, rating) => {
     try {
       await axios.post(`${API}/ratings`, {
         store_id: storeId,
         rating: rating
       });
-      toast.success('Rating submitted successfully');
+      
+      const action = userRatings[storeId] ? 'updated' : 'submitted';
+      toast.success(`Rating ${action} successfully`);
       
       // Update local state
       setUserRatings(prev => ({ ...prev, [storeId]: rating }));
@@ -1232,8 +1268,17 @@ const UserDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900" data-testid="user-dashboard-title">Store Directory</h1>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowPasswordDialog(true)}
+            data-testid="update-password-btn"
+            className="flex items-center space-x-2"
+          >
+            <User className="h-4 w-4" />
+            <span>Update Password</span>
+          </Button>
         </div>
       </div>
       
@@ -1272,7 +1317,7 @@ const UserDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium mb-2">Store Rating:</p>
+                    <p className="text-sm font-medium mb-2">Overall Rating:</p>
                     {renderStars(store.average_rating, null, true)}
                     <p className="text-xs text-gray-500 mt-1">{store.total_ratings} ratings</p>
                   </div>
@@ -1287,6 +1332,9 @@ const UserDashboard = () => {
                     {renderStars(
                       userRatings[store.id] || 0, 
                       (rating) => submitRating(store.id, rating)
+                    )}
+                    {userRatings[store.id] && (
+                      <p className="text-xs text-green-600 mt-1">Click stars to modify your rating</p>
                     )}
                   </div>
                 </div>
@@ -1303,6 +1351,59 @@ const UserDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Password Update Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Password</DialogTitle>
+            <DialogDescription>Change your account password</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                placeholder="Enter current password"
+                required
+                data-testid="current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>New Password (8-16 chars, 1 uppercase, 1 special)</Label>
+              <Input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                placeholder="Enter new password"
+                required
+                data-testid="new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm New Password</Label>
+              <Input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                placeholder="Confirm new password"
+                required
+                data-testid="confirm-new-password"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button type="submit" className="flex-1" data-testid="submit-password-update">
+                Update Password
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setShowPasswordDialog(false)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
