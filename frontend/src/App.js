@@ -211,7 +211,258 @@ const Login = () => {
   );
 };
 
-// Register Component
+// Store Owner Registration Component
+const StoreOwnerRegister = () => {
+  const [formData, setFormData] = useState({
+    user: {
+      name: '',
+      email: '',
+      address: '',
+      password: '',
+      confirmPassword: ''
+    },
+    store: {
+      name: '',
+      email: '',
+      address: ''
+    }
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleUserChange = (e) => {
+    setFormData({
+      ...formData,
+      user: {
+        ...formData.user,
+        [e.target.name]: e.target.value
+      }
+    });
+  };
+
+  const handleStoreChange = (e) => {
+    setFormData({
+      ...formData,
+      store: {
+        ...formData.store,
+        [e.target.name]: e.target.value
+      }
+    });
+  };
+
+  const validateForm = () => {
+    if (formData.user.name.length < 20 || formData.user.name.length > 60) {
+      toast.error('Name must be between 20 and 60 characters');
+      return false;
+    }
+    if (formData.user.address.length > 400) {
+      toast.error('User address must be less than 400 characters');
+      return false;
+    }
+    if (formData.store.address.length > 400) {
+      toast.error('Store address must be less than 400 characters');
+      return false;
+    }
+    if (formData.user.password !== formData.user.confirmPassword) {
+      toast.error('Passwords do not match');
+      return false;
+    }
+    if (!/^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])/.test(formData.user.password)) {
+      toast.error('Password must contain at least one uppercase letter and one special character');
+      return false;
+    }
+    return true;
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/auth/store-owner-register`, {
+        user: {
+          name: formData.user.name,
+          email: formData.user.email,
+          address: formData.user.address,
+          password: formData.user.password
+        },
+        store: {
+          name: formData.store.name,
+          email: formData.store.email,
+          address: formData.store.address
+        }
+      });
+
+      toast.success('Store owner registration submitted for admin approval!');
+      
+      // Redirect to login after successful registration
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+      
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Registration failed');
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-gray-800">Register Your Store</CardTitle>
+          <CardDescription className="text-gray-600">Join our platform as a store owner (Admin approval required)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleRegister} className="space-y-6">
+            <div className="border rounded-lg p-4 bg-blue-50">
+              <h3 className="font-semibold mb-4 text-blue-800">Owner Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="user-name">Full Name (20-60 characters)</Label>
+                  <Input
+                    id="user-name"
+                    name="name"
+                    value={formData.user.name}
+                    onChange={handleUserChange}
+                    placeholder="Enter your full name"
+                    required
+                    data-testid="store-owner-name"
+                    className="h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="user-email">Email Address</Label>
+                  <Input
+                    id="user-email"
+                    name="email"
+                    type="email"
+                    value={formData.user.email}
+                    onChange={handleUserChange}
+                    placeholder="Enter your email"
+                    required
+                    data-testid="store-owner-email"
+                    className="h-12"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="user-address">Personal Address (Max 400 characters)</Label>
+                <Textarea
+                  id="user-address"
+                  name="address"
+                  value={formData.user.address}
+                  onChange={handleUserChange}
+                  placeholder="Enter your personal address"
+                  required
+                  data-testid="store-owner-address"
+                  className="min-h-20"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="user-password">Password (8-16 chars, 1 uppercase, 1 special)</Label>
+                  <Input
+                    id="user-password"
+                    name="password"
+                    type="password"
+                    value={formData.user.password}
+                    onChange={handleUserChange}
+                    placeholder="Enter your password"
+                    required
+                    data-testid="store-owner-password"
+                    className="h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="user-confirm-password">Confirm Password</Label>
+                  <Input
+                    id="user-confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.user.confirmPassword}
+                    onChange={handleUserChange}
+                    placeholder="Confirm your password"
+                    required
+                    data-testid="store-owner-confirm-password"
+                    className="h-12"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4 bg-green-50">
+              <h3 className="font-semibold mb-4 text-green-800">Store Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="store-name">Store Name</Label>
+                  <Input
+                    id="store-name"
+                    name="name"
+                    value={formData.store.name}
+                    onChange={handleStoreChange}
+                    placeholder="Enter your store name"
+                    required
+                    data-testid="store-name"
+                    className="h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="store-email">Store Email</Label>
+                  <Input
+                    id="store-email"
+                    name="email"
+                    type="email"
+                    value={formData.store.email}
+                    onChange={handleStoreChange}
+                    placeholder="Enter store email"
+                    required
+                    data-testid="store-email"
+                    className="h-12"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="store-address">Store Address (Max 400 characters)</Label>
+                <Textarea
+                  id="store-address"
+                  name="address"
+                  value={formData.store.address}
+                  onChange={handleStoreChange}
+                  placeholder="Enter store address"
+                  required
+                  data-testid="store-address"
+                  className="min-h-20"
+                />
+              </div>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold rounded-lg transition-all duration-200"
+              disabled={loading}
+              data-testid="store-owner-submit"
+            >
+              {loading ? 'Submitting for Approval...' : 'Register Store'}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <Button variant="link" className="p-0 text-orange-600 font-semibold" onClick={() => window.location.href = '/login'}>
+                Sign in here
+              </Button>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
