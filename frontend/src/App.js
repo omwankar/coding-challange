@@ -644,24 +644,70 @@ const Register = () => {
   );
 };
 
-// Dashboard Components
+// Admin Dashboard Components
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ total_users: 0, total_stores: 0, total_ratings: 0 });
   const [users, setUsers] = useState([]);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showAddStoreDialog, setShowAddStoreDialog] = useState(false);
+  const [selectedUserDetails, setSelectedUserDetails] = useState(null);
+  
+  // Filter states
+  const [userFilters, setUserFilters] = useState({
+    name: '',
+    email: '',
+    address: '',
+    role: ''
+  });
+  const [storeFilters, setStoreFilters] = useState({
+    name: '',
+    email: '',
+    address: ''
+  });
+
+  // Add User Form
+  const [addUserForm, setAddUserForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    address: '',
+    role: 'normal_user'
+  });
+
+  // Add Store Form  
+  const [addStoreForm, setAddStoreForm] = useState({
+    name: '',
+    email: '',
+    address: '',
+    owner_email: ''
+  });
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [userFilters, storeFilters]);
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, usersRes, storesRes] = await Promise.all([
-        axios.get(`${API}/admin/dashboard`),
-        axios.get(`${API}/admin/users`),
-        axios.get(`${API}/admin/stores`)
+      const statsRes = await axios.get(`${API}/admin/dashboard`);
+      
+      // Build query params for users
+      const userParams = new URLSearchParams();
+      Object.entries(userFilters).forEach(([key, value]) => {
+        if (value) userParams.append(key, value);
+      });
+      
+      // Build query params for stores  
+      const storeParams = new URLSearchParams();
+      Object.entries(storeFilters).forEach(([key, value]) => {
+        if (value) storeParams.append(key, value);
+      });
+
+      const [usersRes, storesRes] = await Promise.all([
+        axios.get(`${API}/admin/users?${userParams}`),
+        axios.get(`${API}/admin/stores?${storeParams}`)
       ]);
 
       setStats(statsRes.data);
@@ -671,6 +717,25 @@ const AdminDashboard = () => {
       toast.error('Failed to fetch dashboard data');
     }
     setLoading(false);
+  };
+
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/admin/users?role=${addUserForm.role}`, {
+        name: addUserForm.name,
+        email: addUserForm.email,
+        password: addUserForm.password,
+        address: addUserForm.address
+      });
+      
+      toast.success('User added successfully');
+      setShowAddUserDialog(false);
+      setAddUserForm({ name: '', email: '', password: '', address: '', role: 'normal_user' });
+      fetchDashboardData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to add user');
+    }
   };
 
   const approveStore = async (storeId) => {
@@ -706,6 +771,28 @@ const AdminDashboard = () => {
     );
   };
 
+  const getUserDetails = async (userId) => {
+    try {
+      const response = await axios.get(`${API}/admin/users`);
+      const user = response.data.find(u => u.id === userId);
+      
+      // If user is store owner, get their store rating
+      if (user && user.role === 'store_owner') {
+        try {
+          const storesResponse = await axios.get(`${API}/admin/stores`);
+          const userStore = storesResponse.data.find(s => s.owner_id === userId);
+          user.store_rating = userStore ? userStore.average_rating : null;
+        } catch (error) {
+          console.log('Error fetching store rating:', error);
+        }
+      }
+      
+      setSelectedUserDetails(user);
+    } catch (error) {
+      toast.error('Failed to fetch user details');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -718,7 +805,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-3xl font-bold text-gray-900" data-testid="admin-dashboard-title">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900" data-testid="admin-dashboard-title">System Administrator Dashboard</h1>
         </div>
       </div>
       
@@ -773,13 +860,58 @@ const AdminDashboard = () => {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>Manage all users in the system</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>User Management</CardTitle>
+                    <CardDescription>Manage all users in the system</CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => setShowAddUserDialog(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="add-user-btn"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add User
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                  <Input
+                    placeholder="Filter by name..."
+                    value={userFilters.name}
+                    onChange={(e) => setUserFilters({...userFilters, name: e.target.value})}
+                    data-testid="user-name-filter"
+                  />
+                  <Input
+                    placeholder="Filter by email..."
+                    value={userFilters.email}
+                    onChange={(e) => setUserFilters({...userFilters, email: e.target.value})}
+                    data-testid="user-email-filter"
+                  />
+                  <Input
+                    placeholder="Filter by address..."
+                    value={userFilters.address}
+                    onChange={(e) => setUserFilters({...userFilters, address: e.target.value})}
+                    data-testid="user-address-filter"
+                  />
+                  <Select value={userFilters.role} onValueChange={(value) => setUserFilters({...userFilters, role: value})}>
+                    <SelectTrigger data-testid="user-role-filter">
+                      <SelectValue placeholder="Filter by role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Roles</SelectItem>
+                      <SelectItem value="system_admin">System Admin</SelectItem>
+                      <SelectItem value="normal_user">Normal User</SelectItem>
+                      <SelectItem value="store_owner">Store Owner</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-4">
                   {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                       <div className="flex items-center space-x-4">
                         <div className="bg-blue-100 p-2 rounded-full">
                           <User className="h-5 w-5 text-blue-600" />
@@ -800,6 +932,14 @@ const AdminDashboard = () => {
                         <Badge variant="secondary">
                           {user.role.replace('_', ' ').toUpperCase()}
                         </Badge>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => getUserDetails(user.id)}
+                          data-testid={`view-user-${user.id}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -815,9 +955,31 @@ const AdminDashboard = () => {
                 <CardDescription>Manage store approvals and listings</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Store Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                  <Input
+                    placeholder="Filter by store name..."
+                    value={storeFilters.name}
+                    onChange={(e) => setStoreFilters({...storeFilters, name: e.target.value})}
+                    data-testid="store-name-filter"
+                  />
+                  <Input
+                    placeholder="Filter by email..."
+                    value={storeFilters.email}
+                    onChange={(e) => setStoreFilters({...storeFilters, email: e.target.value})}
+                    data-testid="store-email-filter"
+                  />
+                  <Input
+                    placeholder="Filter by address..."
+                    value={storeFilters.address}
+                    onChange={(e) => setStoreFilters({...storeFilters, address: e.target.value})}
+                    data-testid="store-address-filter"
+                  />
+                </div>
+
                 <div className="space-y-4">
                   {stores.map((store) => (
-                    <div key={store.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={store.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                       <div className="flex items-center space-x-4">
                         <div className="bg-green-100 p-2 rounded-full">
                           <Store className="h-5 w-5 text-green-600" />
@@ -834,7 +996,7 @@ const AdminDashboard = () => {
                           </p>
                           <div className="flex items-center mt-2">
                             <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                            <span className="text-sm">{store.average_rating.toFixed(1)} ({store.total_ratings} ratings)</span>
+                            <span className="text-sm">Rating: {store.average_rating.toFixed(1)} ({store.total_ratings} ratings)</span>
                           </div>
                         </div>
                       </div>
@@ -868,6 +1030,120 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Add User Dialog */}
+        <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>Create a new user account with specified role</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Full Name (20-60 characters)</Label>
+                <Input
+                  value={addUserForm.name}
+                  onChange={(e) => setAddUserForm({...addUserForm, name: e.target.value})}
+                  placeholder="Enter full name"
+                  required
+                  data-testid="add-user-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input
+                  type="email"
+                  value={addUserForm.email}
+                  onChange={(e) => setAddUserForm({...addUserForm, email: e.target.value})}
+                  placeholder="Enter email"
+                  required
+                  data-testid="add-user-email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Password (8-16 chars, 1 uppercase, 1 special)</Label>
+                <Input
+                  type="password"
+                  value={addUserForm.password}
+                  onChange={(e) => setAddUserForm({...addUserForm, password: e.target.value})}
+                  placeholder="Enter password"
+                  required
+                  data-testid="add-user-password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Address (Max 400 characters)</Label>
+                <Textarea
+                  value={addUserForm.address}
+                  onChange={(e) => setAddUserForm({...addUserForm, address: e.target.value})}
+                  placeholder="Enter address"
+                  required
+                  data-testid="add-user-address"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>User Role</Label>
+                <Select value={addUserForm.role} onValueChange={(value) => setAddUserForm({...addUserForm, role: value})}>
+                  <SelectTrigger data-testid="add-user-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal_user">Normal User</SelectItem>
+                    <SelectItem value="system_admin">System Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex space-x-2">
+                <Button type="submit" className="flex-1" data-testid="submit-add-user">
+                  Add User
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddUserDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* User Details Dialog */}
+        <Dialog open={!!selectedUserDetails} onOpenChange={() => setSelectedUserDetails(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>User Details</DialogTitle>
+            </DialogHeader>
+            {selectedUserDetails && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="font-semibold">Name:</Label>
+                  <p className="text-gray-700">{selectedUserDetails.name}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Email:</Label>
+                  <p className="text-gray-700">{selectedUserDetails.email}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Address:</Label>
+                  <p className="text-gray-700">{selectedUserDetails.address}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Role:</Label>
+                  <Badge variant="secondary" className="ml-2">
+                    {selectedUserDetails.role.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                {selectedUserDetails.role === 'store_owner' && selectedUserDetails.store_rating !== undefined && (
+                  <div>
+                    <Label className="font-semibold">Store Rating:</Label>
+                    <div className="flex items-center mt-1">
+                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="text-gray-700">{selectedUserDetails.store_rating ? selectedUserDetails.store_rating.toFixed(1) : 'No ratings yet'}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
