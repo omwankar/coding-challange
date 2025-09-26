@@ -1,0 +1,122 @@
+{
+  "timestamp": "2025-09-26T10:59:51.163420",
+  "total_tests": 19,
+  "passed_tests": 16,
+  "success_rate": 84.21052631578947,
+  "test_results": [
+    {
+      "test_name": "Admin Login",
+      "status": "PASS",
+      "details": "Admin logged in successfully, role: system_admin",
+      "timestamp": "2025-09-26T10:59:46.258724"
+    },
+    {
+      "test_name": "Normal User Registration",
+      "status": "PASS",
+      "details": "User registered: testuser105946@example.com",
+      "timestamp": "2025-09-26T10:59:46.531193"
+    },
+    {
+      "test_name": "Store Owner Registration",
+      "status": "PASS",
+      "details": "Store owner registered, store ID: c5daf8de-2f6e-47ba-97f6-df46b8e26a5d",
+      "timestamp": "2025-09-26T10:59:46.805474"
+    },
+    {
+      "test_name": "Store Owner Login",
+      "status": "PASS",
+      "details": "Store owner logged in: storeowner105946@example.com",
+      "timestamp": "2025-09-26T10:59:47.077308"
+    },
+    {
+      "test_name": "Admin Dashboard Stats",
+      "status": "PASS",
+      "details": "Users: 5, Stores: 2, Ratings: 1",
+      "timestamp": "2025-09-26T10:59:47.118098"
+    },
+    {
+      "test_name": "Admin Get Users",
+      "status": "PASS",
+      "details": "Retrieved 5 users",
+      "timestamp": "2025-09-26T10:59:47.153943"
+    },
+    {
+      "test_name": "Admin Get Stores",
+      "status": "PASS",
+      "details": "Retrieved 2 stores",
+      "timestamp": "2025-09-26T10:59:47.207978"
+    },
+    {
+      "test_name": "Admin Approve Store",
+      "status": "PASS",
+      "details": "Store c5daf8de-2f6e-47ba-97f6-df46b8e26a5d approved successfully",
+      "timestamp": "2025-09-26T10:59:47.245975"
+    },
+    {
+      "test_name": "Get Approved Stores",
+      "status": "PASS",
+      "details": "Retrieved 2 approved stores",
+      "timestamp": "2025-09-26T10:59:47.285348"
+    },
+    {
+      "test_name": "Submit Rating",
+      "status": "PASS",
+      "details": "Rating submitted for store Demo Electronics Store",
+      "timestamp": "2025-09-26T10:59:47.325812"
+    },
+    {
+      "test_name": "Update Rating",
+      "status": "PASS",
+      "details": "Rating updated to 5 stars for store Demo Electronics Store",
+      "timestamp": "2025-09-26T10:59:47.362504"
+    },
+    {
+      "test_name": "Get My Rating",
+      "status": "PASS",
+      "details": "Retrieved rating: 5 for store Demo Electronics Store",
+      "timestamp": "2025-09-26T10:59:50.354658"
+    },
+    {
+      "test_name": "Password Validation - Password too short",
+      "status": "PASS",
+      "details": "Correctly handled: Short1!",
+      "timestamp": "2025-09-26T10:59:50.392528"
+    },
+    {
+      "test_name": "Password Validation - Password too long",
+      "status": "PASS",
+      "details": "Correctly handled: toolongpassword123!",
+      "timestamp": "2025-09-26T10:59:50.427632"
+    },
+    {
+      "test_name": "Password Validation - No uppercase letter",
+      "status": "FAIL",
+      "details": "Expected failure, got status 400",
+      "timestamp": "2025-09-26T10:59:50.460622"
+    },
+    {
+      "test_name": "Password Validation - No lowercase letter",
+      "status": "PASS",
+      "details": "Correctly handled: NOLOWERCASE1!",
+      "timestamp": "2025-09-26T10:59:50.727983"
+    },
+    {
+      "test_name": "Password Validation - No special character",
+      "status": "FAIL",
+      "details": "Expected failure, got status 400",
+      "timestamp": "2025-09-26T10:59:50.804217"
+    },
+    {
+      "test_name": "Password Validation - Valid password",
+      "status": "PASS",
+      "details": "Correctly handled: ValidPass1!",
+      "timestamp": "2025-09-26T10:59:51.111662"
+    },
+    {
+      "test_name": "Role-Based Access Control",
+      "status": "FAIL",
+      "details": "Expected 403, got 403",
+      "timestamp": "2025-09-26T10:59:51.163144"
+    }
+  ]
+}
