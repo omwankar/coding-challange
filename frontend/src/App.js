@@ -896,12 +896,12 @@ const AdminDashboard = () => {
                     onChange={(e) => setUserFilters({...userFilters, address: e.target.value})}
                     data-testid="user-address-filter"
                   />
-                  <Select value={userFilters.role} onValueChange={(value) => setUserFilters({...userFilters, role: value})}>
+                  <Select value={userFilters.role || ''} onValueChange={(value) => setUserFilters({...userFilters, role: value === 'all' ? '' : value})}>
                     <SelectTrigger data-testid="user-role-filter">
                       <SelectValue placeholder="Filter by role..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Roles</SelectItem>
+                      <SelectItem value="all">All Roles</SelectItem>
                       <SelectItem value="system_admin">System Admin</SelectItem>
                       <SelectItem value="normal_user">Normal User</SelectItem>
                       <SelectItem value="store_owner">Store Owner</SelectItem>
